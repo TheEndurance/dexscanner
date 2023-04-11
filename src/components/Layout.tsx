@@ -1,21 +1,19 @@
 
 import React, { useContext } from "react";
-import styled from 'styled-components';
 import { AppContext, AppState } from '../context/AppContext';
+import Sidebar from "./Sidebar";
+import Chart from "./Chart";
+import Infobar from "./Infobar";
 
 
-const MainContainer = styled.div`
-display: grid;
-transition: grid-template-columns 0.3s ease-in-out;
-grid-template-columns: ${(props: AppState) => props.sidebarCollapsed ? '7% 1fr 20%' : '15% 1fr 20%'};
-`;
 
-
-export default function Layout({ children } : { children: React.ReactNode }) {
+export default function Layout() {
     const state = useContext(AppContext)
     return (
-        <MainContainer sidebarCollapsed={state.sidebarCollapsed}>
-            {children}
-        </MainContainer>
+        <div className="flex md:flex-row flex-col w-full h-full dark:bg-slate-800">
+            <Sidebar />
+            <Chart />
+            <Infobar />
+        </div>
     )
 }
