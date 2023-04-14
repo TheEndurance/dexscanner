@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useContext } from 'react';
-import { createChart, ColorType, AreaData } from 'lightweight-charts';
+import React, { useEffect, useRef, useContext, useState } from 'react';
+import { createChart, ColorType, AreaData, IChartApi } from 'lightweight-charts';
+import { AppContext } from '../context/AppContext';
 
 
 interface ChartColors {
@@ -7,7 +8,9 @@ interface ChartColors {
     lineColor?: string
     textColor?: string
     areaTopColor?: string
-    areaBottomColor?: string
+    areaBottomColor?: string,
+    vertLines?: string,
+    horzLines?: string
 }
 
 interface ChartProps {
@@ -20,19 +23,19 @@ export default function Chart(props: ChartProps) {
     const {
         data,
         colors: {
-            backgroundColor = 'white',
+            backgroundColor = '#222',
             lineColor = '#2962FF',
-            textColor = 'black',
-            areaTopColor = '#2962FF',
-            areaBottomColor = 'rgba(41, 98, 255, 0.28)',
+            textColor = 'white',
+            vertLines = '#444',
+            horzLines = '#444'
         } = {},
     } = props;
-
+    const [chart, setChart] = useState<IChartApi | null>();
     const chartContainerRef = useRef<HTMLDivElement>();
-    
+    const appState = useContext(AppContext);
+
 
     useEffect(() => {
-        
         const handleResize = () => {
             chart.applyOptions({ width: chartContainerRef?.current?.clientWidth });
         };
@@ -40,32 +43,39 @@ export default function Chart(props: ChartProps) {
         const chart = createChart(chartContainerRef?.current || "", {
             layout: {
                 background: { type: ColorType.Solid, color: backgroundColor },
-                textColor,
+                textColor
             },
-            width: chartContainerRef?.current?.clientWidth,
-            height: 540,
+            grid: {
+                vertLines: { color: vertLines },
+                horzLines: { color: horzLines }
+            }
         });
+        setChart(chart);
+
         chart.timeScale().fitContent();
 
-        const newSeries = chart.addAreaSeries({ lineColor, topColor: areaTopColor, bottomColor: areaBottomColor });
+        const newSeries = chart.addCandlestickSeries();
         newSeries.setData(data);
 
         window.addEventListener('resize', handleResize);
-        window.addEventListener('transitionend', handleResize);
         return () => {
             window.removeEventListener('resize', handleResize);
-            window.removeEventListener('transitionend', handleResize);
             chart.remove();
         };
     },
-        [data, backgroundColor, lineColor, textColor, areaTopColor, areaBottomColor]
+        [data, backgroundColor, lineColor, textColor, vertLines, horzLines]
     );
+    useEffect(() => {
+        if (chart != null) {
+            chart.applyOptions({ width: chartContainerRef?.current?.clientWidth });
+        }
+    }, [appState.isSidebarOpen])
 
     return (
-        
-            <div className="md:grow md:w-8/12 w-full overflow-hidden" ref={chartContainerRef}/>
-        
-
+        <div className='flex flex-row flex-wrap w-full h-full'>
+            <div className="w-full h-18/20" ref={chartContainerRef}></div>
+            <div className="w-full h-1/20 border-t dark:border-t-gray-700"></div>
+        </div>
     );
 }
 
