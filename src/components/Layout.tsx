@@ -1,12 +1,15 @@
 
-import React, { useContext, useState, useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { CandlestickData } from 'lightweight-charts';
 
 
-import { AppContext, AppState } from '../context/AppContext';
+import { AppContext, AppDispatchContext, setDisplayMode, DisplayMode, MOBILE_BREAKPOINT, displayTradeHistory, displayChart } from '../context/AppContext';
 import Sidebar from "./Sidebar";
 import Chart from "./Chart";
 import Infobar from "./Infobar";
+import DesktopControls from "./DesktopControls";
+import MobileControls from "./MobileControls";
+import MobileMenuBar from "./MobileMenuBar";
 
 
 const initialData: Array<CandlestickData> = [
@@ -1057,31 +1060,43 @@ const initialData: Array<CandlestickData> = [
 
 export default function Layout() {
     const appState = useContext(AppContext);
-    const breakpoint = 768;
-    const [isMobile, setMobile] = useState(window.innerWidth < breakpoint);
+    const dispatch = useContext(AppDispatchContext);
+
 
     useEffect(() => {
-        const handleResizeWindow = () => setMobile(window.innerWidth < breakpoint);
+        const handleResizeWindow = () => {
+            const mode = window.innerWidth < MOBILE_BREAKPOINT ? DisplayMode.MOBILE : DisplayMode.DESKTOP
+            const setDisplayModeAction = setDisplayMode(mode);
+            dispatch(setDisplayModeAction);
+        }
         window.addEventListener('resize', handleResizeWindow);
         return () => {
             window.removeEventListener('resize', handleResizeWindow);
         };
-    }, []);
+    });
     return (
-        <div className="flex md:flex-row flex-col w-full h-full dark:bg-gray-900">
-            <Sidebar />
-            <div className="flex flex-row flex-wrap md:grow md:w-8/12 w-full h-full overflow-hidden">
-                <div className={"flex justify-start items-center w-full p-2 h-1/20 border-b dark:border-b-gray-700 " + (isMobile ? 'hidden' : 'block')}>
-                    <label htmlFor="showTrades" className="text-slate-300 text-xs font-bold  mr-3">
-                        <input className="align-middle" type="checkbox" name="showTrades" id="showTrades" /> SHOW TRADES
-                    </label>
-                    <label htmlFor="showChart" className="text-slate-300 text-xs font-bold">
-                        <input className="align-middle" type="checkbox" name="showChart" id="showChart" /> SHOW CHART
-                    </label>
-                </div>
-                <Chart data={initialData} />
+        <div className="flex md:flex-row flex-col w-full h-full dark:bg-gray-950  text-slate-900 dark:text-slate-300">
+            <div className={"shrink-0 dark:border-r-gray-700 border-r " + (appState.isMobile ? "hidden" : "block") + " " + (appState.isSidebarOpen ? 'w-2/12' : 'w-1/12')}>
+                <Sidebar />
             </div>
-            <div className='text-center p-2 md:w-2/12 w-full text-black dark:text-white dark:bg-gray-950 border-l dark:border-l-gray-700'>
+            <div className="flex flex-row flex-wrap md:grow md:w-8/12 w-full h-full overflow-hidden">
+                <div className={"w-full h-1/20 border-b dark:border-b-gray-700 " + (appState.isMobile ? "hidden" : "")}>
+                    <DesktopControls />
+                </div>
+                <div className={"w-full h-1/20 dark:border-b-gray-700 border-b " + (appState.isMobile ? "" : "hidden")}>
+                    <MobileMenuBar />
+                </div>
+                <div className={"w-full h-18/20 " + (!appState.isChartVisible && appState.isMobile ? "block" : "hidden")}>
+                    <Infobar />
+                </div>
+                <div className={"w-full " + (appState.isChartVisible ? "flex" : "hidden") + " " + (appState.isMobile ? "h-18/20" : "h-19/20")} >
+                    <Chart data={initialData} />
+                </div>
+                <div className={"w-full h-1/20 " + (appState.isMobile ? "" : "hidden")}>
+                    <MobileControls />
+                </div>
+            </div>
+            <div className={"w-2/12 dark:border-l-gray-700 border-l " + (appState.isMobile ? "hidden" : "block")}>
                 <Infobar />
             </div>
         </div>

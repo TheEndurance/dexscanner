@@ -12,14 +12,12 @@ export default function Sidebar() {
     };
     
     return (
-        <div className={
-            'p-2 text-center shadow-lg dark:bg-gray-950 overflow-hidden dark:border-r-gray-700 border-r text-black dark:text-white hidden md:block '
-            + (appState.isSidebarOpen ? 'md:w-2/12' : 'md:w-1/12')
-            + ' ' + (appState.isMobile ? 'hidden' : 'block')}>
+        <div className='p-2 w-full h-full text-center overflow-hidden'>
             <h1 className='font-bold text-2xl transition-transform'>{appState.isSidebarOpen ? 'DexScanner' : 'DS'}</h1>
             <button className='p-1 rounded-md shadow-2xl bg-blue-500' onClick={handleToggleSidebar}>
                 Collapse
             </button>
         </div>
     )
+    
 }

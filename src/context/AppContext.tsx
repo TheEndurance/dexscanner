@@ -1,5 +1,7 @@
 import React, { createContext, useReducer } from 'react';
 
+export const MOBILE_BREAKPOINT = 768;
+
 export interface AppState {
     isSidebarOpen: boolean;
     isChartVisible: boolean;
@@ -11,7 +13,7 @@ const initialAppState: AppState = {
     isSidebarOpen: true,
     isChartVisible: true,
     isTradeHistoryVisible: false,
-    isMobile: false
+    isMobile: window.innerWidth < MOBILE_BREAKPOINT
 };
 
 enum ActionType {
@@ -21,9 +23,9 @@ enum ActionType {
     DISPLAY_TRADE_HISTORY = 'DISPLAY_TRADE_HISTORY'
 }
 
-enum DisplayMode {
+export enum DisplayMode {
     MOBILE = 'MOBILE',
-    DEKSTOP = 'DESKTOP'
+    DESKTOP = 'DESKTOP'
 }
 
 interface Action {
@@ -93,7 +95,7 @@ export const AppReducer = (state: AppState, action: Action): AppState => {
         case ActionType.DISPLAY_TRADE_HISTORY:
             return { ...state, isTradeHistoryVisible: action.payload };
         case ActionType.SET_DISPLAY_MODE:
-            return { ...state, isMobile: action.payload }
+            return { ...state, isMobile: action.payload === DisplayMode.MOBILE }
         default:
             return state;
     }

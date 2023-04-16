@@ -31,13 +31,38 @@ export default function Chart(props: ChartProps) {
         } = {},
     } = props;
     const [chart, setChart] = useState<IChartApi | null>();
+    const [range, setRange] = useState<string>("30m");
     const chartContainerRef = useRef<HTMLDivElement>();
     const appState = useContext(AppContext);
+
+    const btnCss = "p-1/2 rounded-md dark:hover:bg-slate-700 min-w-[2.5rem]";
+    const rangeButtons = [
+        {
+            label: "30m",
+            css: btnCss
+        },
+        {
+            label: "1H",
+            css: btnCss
+        },
+        {
+            label: "4H",
+            css: btnCss
+        },
+        {
+            label: "1D",
+            css: btnCss
+        }
+    ];
+
+    const handleRangeButtonClick = function(buttonIndex: number, buttonLabel: string): void {
+        setRange(buttonLabel);
+    }
 
 
     useEffect(() => {
         const handleResize = () => {
-            chart.applyOptions({ width: chartContainerRef?.current?.clientWidth });
+            chart.applyOptions({ width: chartContainerRef?.current?.clientWidth, height: chartContainerRef.current?.clientHeight });
         };
 
         const chart = createChart(chartContainerRef?.current || "", {
@@ -73,8 +98,19 @@ export default function Chart(props: ChartProps) {
 
     return (
         <div className='flex flex-row flex-wrap w-full h-full'>
-            <div className="w-full h-18/20" ref={chartContainerRef}></div>
-            <div className="w-full h-1/20 border-t dark:border-t-gray-700"></div>
+            <div className="flex justify-end items-center dark:text-slate-300 gap-3 w-full h-1/12 border-b dark:border-b-gray-700">
+                <div className="flex mr-2 justify-evenly h-4/6 p-1 gap-4 border rounded-md dark:border-gray-600">
+                    {
+                        rangeButtons.map((button, index) => (
+                            <button key={index} className={button.css + " " + (range === button.label ? "dark:bg-slate-400" : "")} onClick={() => handleRangeButtonClick(index, button.label)}>
+                                {button.label}
+                            </button>
+                        ))
+                    }
+                </div>
+            </div>
+            <div className="w-full h-11/12" ref={chartContainerRef}></div>
+
         </div>
     );
 }
