@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useContext, useState } from 'react';
 import { createChart, ColorType, IChartApi, CandlestickData } from 'lightweight-charts';
-import { AppContext } from '../context/AppContext';
+import { DesktopLayoutLocalStorageContext, DESKTOP_LAYOUT_SETTINGS_KEYS, ChartTradesLocalStorageContext, CHART_TRADES_SETTINGS_KEYS } from '../context/LocalStorageContexts';
 
 
 interface ChartColors {
@@ -33,7 +33,11 @@ export default function Chart(props: ChartProps) {
     const [chart, setChart] = useState<IChartApi | null>();
     const [range, setRange] = useState<string>("30m");
     const chartContainerRef = useRef<HTMLDivElement>();
-    const appState = useContext(AppContext);
+
+    const { state: desktopLayoutState } = useContext(DesktopLayoutLocalStorageContext);
+    const { state: chartTradesState } = useContext(ChartTradesLocalStorageContext);
+    const { SHOW_CHART, SHOW_TRADES } = CHART_TRADES_SETTINGS_KEYS;
+    const { SIDEBAR_COLLAPSED } = DESKTOP_LAYOUT_SETTINGS_KEYS;
 
     const btnCss = "p-1/2 rounded-md dark:hover:bg-slate-700 min-w-[2.5rem]";
     const rangeButtons = [
@@ -92,9 +96,9 @@ export default function Chart(props: ChartProps) {
     );
     useEffect(() => {
         if (chart != null) {
-            chart.applyOptions({ width: chartContainerRef?.current?.clientWidth });
+            chart.applyOptions({ width: chartContainerRef?.current?.clientWidth, height: chartContainerRef.current?.clientHeight });
         }
-    }, [appState.isSidebarOpen])
+    }, [desktopLayoutState[SIDEBAR_COLLAPSED], chartTradesState[SHOW_CHART], chartTradesState[SHOW_TRADES]])
 
     return (
         <div className='flex flex-row flex-wrap w-full h-full'>

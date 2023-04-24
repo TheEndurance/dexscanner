@@ -7,7 +7,7 @@ import SidebarMainAsideLayout from './components/SidebarMainAsideLayout';
 import Sidebar from './components/Sidebar';
 import Infobar from './components/Infobar';
 import DesktopChartsAndTrades from './components/DesktopChartsAndTrades';
-import { ChartTradesLocalStorageContextProvider } from './context/LocalStorageContexts';
+import { ChartTradesLocalStorageContextProvider, DesktopLayoutLocalStorageContextProvider, } from './context/LocalStorageContexts';
 
 
 function App() {
@@ -21,13 +21,15 @@ function App() {
     }
     else if (isDesktop || isTablet) {
         return (
-            <SidebarMainAsideLayout>
-                <Sidebar />
-                <ChartTradesLocalStorageContextProvider>
-                    <DesktopChartsAndTrades />
-                </ChartTradesLocalStorageContextProvider>
-                <Infobar />
-            </SidebarMainAsideLayout>
+            <DesktopLayoutLocalStorageContextProvider>
+                <SidebarMainAsideLayout>
+                    <Sidebar />
+                    <ChartTradesLocalStorageContextProvider>
+                        <DesktopChartsAndTrades />
+                    </ChartTradesLocalStorageContextProvider>
+                    <Infobar />
+                </SidebarMainAsideLayout>
+            </DesktopLayoutLocalStorageContextProvider>
         )
     }
     else {
