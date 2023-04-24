@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useContext, useState } from 'react';
-import { createChart, ColorType, AreaData, IChartApi } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, CandlestickData } from 'lightweight-charts';
 import { AppContext } from '../context/AppContext';
 
 
@@ -14,7 +14,7 @@ interface ChartColors {
 }
 
 interface ChartProps {
-    data: Array<AreaData>,
+    data: Array<CandlestickData>,
     colors?: ChartColors
 }
 
@@ -98,7 +98,7 @@ export default function Chart(props: ChartProps) {
 
     return (
         <div className='flex flex-row flex-wrap w-full h-full'>
-            <div className="flex justify-end items-center dark:text-slate-300 gap-3 w-full h-1/12 border-b dark:border-b-gray-700">
+            <div className="flex justify-end items-center gap-3 w-full h-1/12 min-h-[4.25rem] border-b dark:border-b-gray-700">
                 <div className="flex mr-2 justify-evenly h-4/6 p-1 gap-4 border rounded-md dark:border-gray-600">
                     {
                         rangeButtons.map((button, index) => (
