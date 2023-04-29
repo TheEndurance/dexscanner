@@ -6,7 +6,7 @@ import { CandlestickData } from 'lightweight-charts';
 import { AppContext, AppDispatchContext, setDisplayMode, DisplayMode, MOBILE_BREAKPOINT, displayTradeHistory, displayChart } from '../context/AppContext';
 import Sidebar from "./Sidebar";
 import Chart from "./Chart";
-import Infobar from "./Infobar";
+import Infobar from "./InfoSection";
 import DesktopControls from "./DesktopControls";
 import MobileControls from "./MobileControls";
 import MobileMenuBar from "./MobileMenuBar";

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useContext, useState } from 'react';
 import { createChart, ColorType, IChartApi, CandlestickData } from 'lightweight-charts';
-import { DesktopLayoutLocalStorageContext, DESKTOP_LAYOUT_SETTINGS_KEYS, ChartTradesLocalStorageContext, CHART_TRADES_SETTINGS_KEYS } from '../context/LocalStorageContexts';
+import { LayoutLocalStorageContext, LAYOUT_SETTINGS_KEYS, ChartTradesLocalStorageContext, CHART_TRADES_SETTINGS_KEYS } from '../context/LocalStorageContexts';
 
 
 interface ChartColors {
@@ -34,10 +34,10 @@ export default function Chart(props: ChartProps) {
     const [range, setRange] = useState<string>("30m");
     const chartContainerRef = useRef<HTMLDivElement>();
 
-    const { state: desktopLayoutState } = useContext(DesktopLayoutLocalStorageContext);
+    const { state: desktopLayoutState } = useContext(LayoutLocalStorageContext);
     const { state: chartTradesState } = useContext(ChartTradesLocalStorageContext);
     const { SHOW_CHART, SHOW_TRADES } = CHART_TRADES_SETTINGS_KEYS;
-    const { SIDEBAR_COLLAPSED } = DESKTOP_LAYOUT_SETTINGS_KEYS;
+    const { SIDEBAR_COLLAPSED } = LAYOUT_SETTINGS_KEYS;
 
     const btnCss = "p-1/2 rounded-md dark:hover:bg-slate-700 min-w-[2.5rem]";
     const rangeButtons = [

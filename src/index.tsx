@@ -1,47 +1,38 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { createBrowserRouter, Route, RouterProvider, Routes } from 'react-router-dom';
 
 
 import ViewportProvider, { useViewport } from './context/ViewportContext';
-import SidebarMainAsideLayout from './components/SidebarMainAsideLayout';
+import SidebarMainAsideLayout from './layouts/SidebarMainAsideLayout';
 import Sidebar from './components/Sidebar';
-import Infobar from './components/Infobar';
 import DesktopChartsAndTrades from './components/DesktopChartsAndTrades';
-import { ChartTradesLocalStorageContextProvider, DesktopLayoutLocalStorageContextProvider, } from './context/LocalStorageContexts';
+import { ChartTradesLocalStorageContextProvider, LayoutLocalStorageContextProvider, } from './context/LocalStorageContexts';
+import InfoSection from './components/InfoSection';
+import Home from './pages/Home';
+import TradingPair from './pages/TradingPair';
 
 
-function App() {
-    const { isMobile, isTablet, isDesktop } = useViewport();
-    if (isMobile) {
-        return (
-            <div>
-                Mobile not implemented
-            </div>
-        )
+const router = createBrowserRouter([
+    {
+        path: "/",
+        element: <Home />,
+    },
+    {
+        path: "/:chain",
+        element: <Home />
+    },
+    {
+        path: "/:chain/:contractId",
+        element: <TradingPair />
     }
-    else if (isDesktop || isTablet) {
-        return (
-            <DesktopLayoutLocalStorageContextProvider>
-                <SidebarMainAsideLayout>
-                    <Sidebar />
-                    <ChartTradesLocalStorageContextProvider>
-                        <DesktopChartsAndTrades />
-                    </ChartTradesLocalStorageContextProvider>
-                    <Infobar />
-                </SidebarMainAsideLayout>
-            </DesktopLayoutLocalStorageContextProvider>
-        )
-    }
-    else {
-        return (<div>Error</div>);
-    }
-}
+]);
 
 // @ts-ignore
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <React.StrictMode>
         <ViewportProvider>
-            <App />
+            <RouterProvider router={router}/>
         </ViewportProvider>
     </React.StrictMode>
 )
