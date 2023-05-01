@@ -1,20 +1,24 @@
 import { useContext } from 'react';
 import { LAYOUT_SETTINGS_KEYS, LayoutLocalStorageContext, UPDATE_KEY } from '../context/LocalStorageContexts';
+import { Chain } from '../data/chains';
+import ChainList from './ChainList';
+
+export interface SidebarProps {
+    chains: Chain[];
+}
 
 
-
-
-export default function Sidebar() {
+export default function Sidebar({ chains }: SidebarProps) {
     const { state, dispatch } = useContext(LayoutLocalStorageContext);
-    const SIDEBAR_COLLAPSED_KEY = LAYOUT_SETTINGS_KEYS.SIDEBAR_COLLAPSED;
+
     const handleToggleSidebar = () => {
         dispatch({
             type: UPDATE_KEY,
             payload: {
-                key: SIDEBAR_COLLAPSED_KEY,
-                value: !state[SIDEBAR_COLLAPSED_KEY]
+                key: LAYOUT_SETTINGS_KEYS.SIDEBAR_COLLAPSED,
+                value: !state.SIDEBAR_COLLAPSED
             }
-        })
+        });
     };
 
     const chevronRight = (
@@ -24,7 +28,7 @@ export default function Sidebar() {
             </g>
         </svg>
     );
-    
+
     const chevronLeft = (
         <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g id="Arrow / Chevron_Left_Duo">
@@ -33,14 +37,18 @@ export default function Sidebar() {
         </svg>
     );
     return (
-        <div className='flex flex-col flex-nowrap p-2 w-full h-full text-center overflow-hidden'>
+        <div className='flex flex-col flex-nowrap gap-2 p-2 w-full h-full text-center overflow-hidden'>
             <div className="flex justify-between">
                 <div className="grow text-center">
-                    <h1 className='font-bold text-2xl transition-transform'>{state[SIDEBAR_COLLAPSED_KEY] ? 'DS' : 'DexScanner'}</h1>
+                    <h1 className='font-bold text-2xl transition-transform'>{state.SIDEBAR_COLLAPSED ? 'DS' : 'DexScanner'}</h1>
                 </div>
                 <button className="self-start" onClick={handleToggleSidebar} title="Toggle Side Menu">
-                    {state.SIDEBAR_COLLAPSED ? chevronRight : chevronLeft }
+                    {state.SIDEBAR_COLLAPSED ? chevronRight : chevronLeft}
                 </button>
+            </div>
+            {/* List of chains */}
+            <div className="flex flex-col flex-nowrap items-center mt-2 ">
+                <ChainList linkCssClasses={"flex flex-row flex-nowrap justify-center gap-2"} textCssClasses={"font-bold text-md"} chains={chains}/>
             </div>
         </div>
     )

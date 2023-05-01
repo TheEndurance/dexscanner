@@ -1,22 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, Route, RouterProvider, Routes } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 
-import ViewportProvider, { useViewport } from './context/ViewportContext';
-import SidebarMainAsideLayout from './layouts/SidebarMainAsideLayout';
-import Sidebar from './components/Sidebar';
-import DesktopChartsAndTrades from './components/DesktopChartsAndTrades';
-import { ChartTradesLocalStorageContextProvider, LayoutLocalStorageContextProvider, } from './context/LocalStorageContexts';
-import InfoSection from './components/InfoSection';
+import ViewportProvider from './context/ViewportContext';
 import Home from './pages/Home';
 import TradingPair from './pages/TradingPair';
-
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Home />,
+        element: <Home />
     },
     {
         path: "/:chain",
