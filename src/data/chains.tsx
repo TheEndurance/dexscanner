@@ -17,3 +17,7 @@ export async function getChains(): Promise<Chain[]> {
     ]
 }
 
+export const DEXByChain = {
+    "arbitrum": [ "uniswap", "sushiswap" ]
+}
+

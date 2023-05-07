@@ -22,7 +22,7 @@ export default function Sidebar({ chains }: SidebarProps) {
     };
 
     const chevronRight = (
-        <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none">
             <g id="Arrow / Chevron_Right_Duo">
                 <path id="Vector" d="M13 8L17 12L13 16M7 8L11 12L7 16" stroke="#FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </g>
@@ -30,7 +30,7 @@ export default function Sidebar({ chains }: SidebarProps) {
     );
 
     const chevronLeft = (
-        <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none">
             <g id="Arrow / Chevron_Left_Duo">
                 <path id="Vector" d="M17 16L13 12L17 8M11 16L7 12L11 8" stroke="#FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </g>

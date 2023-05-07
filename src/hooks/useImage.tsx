@@ -8,8 +8,8 @@ const useImage = (fileName: string) => {
     useEffect(() => {
         const fetchImage = async () => {
             try {
-                const fn = `../assets/img/${fileName}`;
-                const response = await import(fn /* @vite-ignore */);  // change relative path to suit your needs
+                const path = `../assets/img/${fileName}`;
+                const response = await import(path /* @vite-ignore */);  // change relative path to suit your needs
                 setImage(response.default);
             } catch (err: any) {
                 setError(err);
