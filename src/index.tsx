@@ -48,7 +48,11 @@ const router = createBrowserRouter([
         element: <Home />
     },
     {
-        path: "/:chain/:contractId",
+        path: "/:chain/:dex",
+        element: <Home />
+    },
+    {
+        path: "/:chain/:dex/:contractId",
         element: <TradingPair />
     }
 ]);

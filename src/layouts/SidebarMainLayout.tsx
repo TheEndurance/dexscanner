@@ -17,7 +17,7 @@ export default function SidebarMainLayout({ children }: { children: Array<ReactE
             <div className={"grow-0 shrink-0 dark:border-r-gray-700 border-r h-full" + " " + (state[SIDEBAR_COLLAPSED_KEY] ? "basis-24" : "basis-48")}>
                 {sidebar}
             </div>
-            <div className={"h-full grow shrink basis-auto overflow-hidden"}>
+            <div className={"h-full grow shrink basis-auto"}>
                 {main}
             </div>
         </div>

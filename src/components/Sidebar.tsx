@@ -47,8 +47,8 @@ export default function Sidebar({ chains }: SidebarProps) {
                 </button>
             </div>
             {/* List of chains */}
-            <div className="flex flex-col flex-nowrap items-center mt-2 ">
-                <ChainList linkCssClasses={"flex flex-row flex-nowrap justify-center gap-2"} textCssClasses={"font-bold text-md"} chains={chains}/>
+            <div className="flex flex-col flex-nowrap mt-2 gap-2">
+                <ChainList linkCssClasses={"flex flex-row flex-nowrap ml-[1.5rem] gap-2"} textCssClasses={"font-bold text-md"} chains={chains}/>
             </div>
         </div>
     )

@@ -1,15 +1,48 @@
 import { useParams } from "react-router-dom";
 
 import { DocumentNode, gql, useQuery, QueryResult as ApolloQueryResult } from '@apollo/client';
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { format } from "d3-format";
+import {
+    createColumnHelper,
+    flexRender,
+    getCoreRowModel,
+    useReactTable,
+} from '@tanstack/react-table'
+import { ListingsTable } from "./ListingsTable";
+
+
+interface MessariPool {
+    id: string,
+    createdTimestamp: string,
+    dailySnapshots: [{
+        dailyVolumeUSD: string,
+    }]
+    inputTokens: [
+        {
+            id: string
+            name: string,
+            lastPriceUSD: string
+        },
+        {
+            id: string,
+            name: string,
+            lastPriceUSD: string
+        }
+    ]
+}
+
+export interface MessariTablePool extends MessariPool {
+    chain: ChainsKey,
+    dex: DexesKey
+}
 
 
 // get all the pools, trading pairs, volume and other info for the pools
 
 interface MesarriPoolsResponse {
-    dexAmmProtocol : {
+    dexAmmProtocol: {
         id: string,
         financialMetrics: [{
             timestamp: string,
@@ -19,22 +52,7 @@ interface MesarriPoolsResponse {
             dailyTransactionCount: number,
             dailyActiveUsers: number
         }]
-        pools: [
-            {
-                id: string,
-                createdTimestamp: string,
-                dailySnapshots: [{
-                    dailyVolumeUSD: string,
-                }]
-                inputTokens: [
-                    {
-                        id: string
-                        name: string,
-                        lastPriceUSD: string
-                    }
-                ]
-            }
-        ]
+        pools: Array<MessariPool>
     }
 }
 
@@ -140,10 +158,10 @@ type QueryContextByChainByDexMap = {
 
 
 type QueryResult = {
-        chain: ChainsKey,
-        dex: DexesKey,
-        queryName: QueryTypes
-        result: ApolloQueryResult
+    chain: ChainsKey,
+    dex: DexesKey,
+    queryName: QueryTypes
+    result: ApolloQueryResult
 }
 
 const queryContextByChainByDex: QueryContextByChainByDexMap = {
@@ -209,9 +227,9 @@ function setQueryResultsByChainsAndDexes(queryContextByChainByDex: QueryContextB
             const queryContext = queryContextByChainByDex[chainKey][dexKey];
             if (isQueryContext(queryContext)) {
                 const { apiName, queries } = queryContext;
-                const { query, variables,type } = queries[queryName];
-                
-                let result; 
+                const { query, variables, type } = queries[queryName];
+
+                let result;
                 if (type === "Messari" && queryName === "getPools") {
                     result = useQuery<MesarriPoolsResponse>(query, { context: { apiName }, variables });
                 }
@@ -250,48 +268,59 @@ function getQueryByChainByDex(queryContextByChainByDex: QueryContextByChainByDex
     return queryResults;
 }
 
+
+
 export default function Listings() {
     const { chain, dex } = useParams();
     const chains: Array<ChainsKey> = chain ? [chain as ChainsKey] : [];
     const dexes: Array<DexesKey> = dex ? [dex as DexesKey] : [];
     const queryResults = getQueryByChainByDex(queryContextByChainByDex, chains, dexes, "getPools");
-    const loading = queryResults.map((queryResult) => queryResult.result.loading);
-    const [dailyVolumeUSD, setDailyVolumeUSD] = useState("$0.00");
-    const [dailyTransactionCount, setDailyTransactionCount] = useState("0");
-    const [dailyActiveUsers, setDailyActiveUsers] = useState("0");
-    
-    
-    useEffect(() => {
-        if (loading.every((entry) => entry !== true)) {
-            console.log(queryResults);
-            let volumeUSD = 0;
-            let transactionCount = 0;
-            let activeUsers = 0;
-            for (let queryResult of queryResults) {
-                const { data } = queryResult.result;
-                if (isMessariPoolsResponse(data)) {
-                    volumeUSD += parseFloat(data.dexAmmProtocol.financialMetrics[0].dailyVolumeUSD);
-                    transactionCount += data.dexAmmProtocol.dailyUsageMetrics[0].dailyTransactionCount;
-                    activeUsers += data.dexAmmProtocol.dailyUsageMetrics[0].dailyActiveUsers;
+    const loading = queryResults.every((queryResult) => queryResult.result.loading);
+
+    const mutatedData = (() => {
+        let volumeUSD = 0;
+        let transactionCount = 0;
+        let activeUsers = 0;
+        let aggregatePools = [];
+        for (let queryResult of queryResults) {
+            console.log(queryResult);
+            const { data } = queryResult.result;
+            if (isMessariPoolsResponse(data)) {
+                volumeUSD += parseFloat(data.dexAmmProtocol.financialMetrics[0].dailyVolumeUSD);
+                transactionCount += data.dexAmmProtocol.dailyUsageMetrics[0].dailyTransactionCount;
+                activeUsers += data.dexAmmProtocol.dailyUsageMetrics[0].dailyActiveUsers;
+                for (let pool of data.dexAmmProtocol.pools) {
+                    aggregatePools.push({
+                        chain: queryResult.chain,
+                        dex: queryResult.dex,
+                        ...pool
+                    });
                 }
             }
-            setDailyVolumeUSD(format(".4~s")(volumeUSD).replace(/G/,"B"));
-            setDailyTransactionCount(format(",")(transactionCount));
-            setDailyActiveUsers(format(",")(activeUsers));
         }
-    }, [loading])
+        return {
+            dailyVolumeUSD: format(".4~s")(volumeUSD).replace(/G/, "B"),
+            dailyTransactionCount: format(",")(transactionCount),
+            dailyActiveUsers: format(",")(activeUsers),
+            pools: aggregatePools
+        }
+    })();
+
 
     return (
-        <div className="flex flex-nowrap gap-2 p-2 border-b dark:border-b-slate-600">
-            <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
-                <span className="text-sm">24H VOLUME: </span><span className= "font-bold">${dailyVolumeUSD}</span>
+        <div className="flex flex-col flex-nowrap w-full h-full overflow-y-scroll">
+            <div className="flex flex-nowrap gap-2 p-2 border-b dark:border-b-slate-600 flex-initial">
+                <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
+                    <span className="text-sm">24H VOLUME: </span><span className="font-bold">{loading ? "loading ..." : ("$" + mutatedData.dailyVolumeUSD)}</span>
+                </div>
+                <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
+                    <span className="text-sm">24H TXNS: </span><span className="font-bold">{loading ? "loading ..." : mutatedData.dailyTransactionCount}</span>
+                </div>
+                <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
+                    <span className="text-sm">24H ACTIVE USERS: </span><span className="font-bold">{loading ? "loading ..." : mutatedData.dailyActiveUsers}</span>
+                </div>
             </div>
-            <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
-                <span className="text-sm">24H TXNS: </span><span className= "font-bold">{dailyTransactionCount}</span>
-            </div>
-            <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
-                <span className="text-sm">24H ACTIVE USERS: </span><span className= "font-bold">{dailyActiveUsers}</span>
-            </div>
+            <ListingsTable loading={loading} data={mutatedData.pools} />
         </div>
     )
 }

@@ -15,7 +15,7 @@ export default function ChainList({ chains, linkCssClasses, textCssClasses }: Ch
     const list = chains.map((chain, index) => {
         return (
             <Link key={index} className={linkCssClasses} to={"/" + chain.name} replace>
-                <Image fileName={chain.fileName} alt={chain.alt} width={26} />
+                <Image fileName={chain.fileName} alt={chain.alt} width={chain.width} />
                 <p className={textCssClasses + " " + (state.SIDEBAR_COLLAPSED ? "hidden" : "")}>{chain.label}</p>
             </Link>
         )
