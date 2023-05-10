@@ -3,8 +3,8 @@ import { MessariTablePool } from "./Listings";
 
 import * as dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat';
-import { format } from "d3-format";
-import { Link, useNavigate } from "react-router-dom";
+import d3Format from "../common/d3Format";
+import { useNavigate } from "react-router-dom";
 
 dayjs.extend(localizedFormat);
 
@@ -21,12 +21,17 @@ const columns = [
     columnHelper.accessor(row => row.inputTokens[0], {
         id: "price",
         header: () => 'Price',
-        cell: prop => <span>${format(".4~s")(parseFloat(prop.getValue().lastPriceUSD))}</span>,
+        cell: prop => <span>${d3Format(".4~s")(parseFloat(prop.getValue().lastPriceUSD))}</span>,
     }),
     columnHelper.accessor(row => row.dailySnapshots[0].dailyVolumeUSD, {
         id: 'dailyVolumeUSD',
         header: "Daily Volume (USD)",
-        cell: info => <i>${format(".4~s")(parseFloat(info.getValue())).replace(/G/, "B")}</i>
+        cell: info => <i>${d3Format(".4~s")(parseFloat(info.getValue())).replace(/G/, "B")}</i>
+    }),
+    columnHelper.accessor(row => row.dailySnapshots[0].totalValueLockedUSD, {
+        id: 'totalValueLockedUSD',
+        header: "TVL (USD)",
+        cell: info => <i>${d3Format(".4~s")(parseFloat(info.getValue())).replace(/G/, "B")}</i>
     }),
     columnHelper.accessor('createdTimestamp', {
         id: 'createdAt',
@@ -57,13 +62,13 @@ export function ListingsTable({ loading, data }: { loading: boolean, data: Array
     });
     return (
 
-        < table className="flex-auto w-full table-fixed" >
+        < table className="flex-auto w-full table-fixed border-separate border-spacing-0" >
             {loading ? <tbody></tbody> : (<>
-                <thead>
+                <thead className="sticky top-0">
                     {table.getHeaderGroups().map(headerGroup => (
                         <tr className="dark:bg-neutral-800" key={headerGroup.id}>
                             {headerGroup.headers.map(header => (
-                                <th className={"border-r border-b dark:border-neutral-600 p-2" + " " + (headerClassNameHelper(header.getContext().header.id))} key={header.id}>
+                                <th className={"border-r border-b border-t dark:border-neutral-600 p-2" + " " + (headerClassNameHelper(header.getContext().header.id))} key={header.id}>
                                     {header.isPlaceholder
                                         ? null
                                         : flexRender(

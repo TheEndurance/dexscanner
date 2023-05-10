@@ -18,6 +18,7 @@ interface MessariPool {
     createdTimestamp: string,
     dailySnapshots: [{
         dailyVolumeUSD: string,
+        totalValueLockedUSD: string
     }]
     inputTokens: [
         {
@@ -72,11 +73,12 @@ const MESSARI_POOLS_QUERY = gql`
                 dailyTransactionCount
                 dailyActiveUsers
             }
-            pools(where: { cumulativeVolumeUSD_gt: 0}, first: 1000) {
+            pools(where: { cumulativeVolumeUSD_gt: 0}, orderBy: totalValueLockedUSD, orderDirection: desc, first: 1000) {
                 id
                 createdTimestamp
                 dailySnapshots(orderBy: timestamp, orderDirection:desc, first: 1) {
                     dailyVolumeUSD
+                    totalValueLockedUSD
                 }
                 inputTokens {
                     id
@@ -309,7 +311,7 @@ export default function Listings() {
 
     return (
         <div className="flex flex-col flex-nowrap w-full h-full overflow-y-scroll">
-            <div className="flex flex-nowrap gap-2 p-2 border-b dark:border-b-slate-600 flex-initial">
+            <div className="flex flex-nowrap gap-2 p-2 flex-initial">
                 <div className="border dark:border-slate-600 rounded p-4 flex-auto text-center">
                     <span className="text-sm">24H VOLUME: </span><span className="font-bold">{loading ? "loading ..." : ("$" + mutatedData.dailyVolumeUSD)}</span>
                 </div>
