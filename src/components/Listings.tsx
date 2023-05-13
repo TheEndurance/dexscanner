@@ -1,16 +1,12 @@
 import { useParams } from "react-router-dom";
 
-import { DocumentNode, gql, useQuery, QueryResult as ApolloQueryResult } from '@apollo/client';
-import { useEffect, useMemo, useState } from "react";
+import { gql, request } from "graphql-request";
+import { useQueries, useQuery } from "@tanstack/react-query";
 
 import { format } from "d3-format";
-import {
-    createColumnHelper,
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
-} from '@tanstack/react-table'
+
 import { ListingsTable } from "./ListingsTable";
+import { useMemo } from "react";
 
 
 interface MessariPool {
@@ -61,8 +57,8 @@ function isMessariPoolsResponse(obj: any): obj is MesarriPoolsResponse {
     return obj && obj.dexAmmProtocol && obj.dexAmmProtocol.pools;
 }
 
-const MESSARI_POOLS_QUERY = gql`
-    query GetPools($protocolId: ID!) @api(contextKey: "apiName") {
+const MESSARI_SUSHISWAP_POOLS_QUERY = gql`
+    query GetPools($protocolId: ID!) {
         dexAmmProtocol(id: $protocolId) {
             id
             financialMetrics(orderBy: timestamp, orderDirection:desc, first: 1) {
@@ -88,10 +84,39 @@ const MESSARI_POOLS_QUERY = gql`
             }
         }
     }
-`
+`;
+
+
+const MESSARI_UNISWAPV3_POOLS_QUERY = gql`
+    query GetPools($protocolId: ID!) {
+        dexAmmProtocol(id: $protocolId) {
+            id
+            financialMetrics(orderBy: timestamp, orderDirection:desc, first: 1) {
+                timestamp
+                dailyVolumeUSD
+            }
+            dailyUsageMetrics(orderBy: timestamp, orderDirection:desc, first: 1) {
+                dailyTransactionCount
+                dailyActiveUsers
+            }
+            pools(where: { cumulativeVolumeUSD_gt: 0}, orderBy: totalValueLockedUSD, orderDirection: desc, first: 1000) {
+                id
+                createdTimestamp
+                dailySnapshots(orderBy: timestamp, orderDirection:desc, first: 1) {
+                    totalValueLockedUSD
+                }
+                inputTokens {
+                    id
+                    name
+                    lastPriceUSD
+                }
+            }
+        }
+    }
+`;
 // get specific information for a pool
 const MESSARI_POOL_QUERY = gql`
-    query GetPool($poolId: ID!, $protocolId: ID!) @api(contextKey: "apiName") {
+    query GetPool($poolId: ID!, $protocolId: ID!) {
         dexAmmProtocol(id: $protocolId) {
             pools(where: { id: $id }) {
                 id
@@ -141,13 +166,11 @@ const apiNameToProviderMap = {
 
 interface IQueryContext {
     apiName: ApiName,
-    contractId: string,
-    uri: string,
     queries: {
         [key in QueryTypes]: {
-            query: DocumentNode,
-            type: SubgraphProviders,
-            variables: object
+            queryFn: () => Promise<unknown>,
+            queryKey: Array<any>,
+            type: SubgraphProviders
         }
     }
 }
@@ -159,59 +182,87 @@ type QueryContextByChainByDexMap = {
 }
 
 
-type QueryResult = {
+type Query = {
     chain: ChainsKey,
     dex: DexesKey,
     queryName: QueryTypes
-    result: ApolloQueryResult
+    type: string,
+    queryFn: () => Promise<unknown>,
+    queryKey: Array<any>
 }
 
 const queryContextByChainByDex: QueryContextByChainByDexMap = {
     arbitrum: {
         "uniswap-v3": {
             apiName: "arbitrum-uniswap-v3",
-            contractId: "0x1f98431c8ad98523631ae4a59f267346ea31f984",
-            uri: "https://api.thegraph.com/subgraphs/name/messari/uniswap-v3-arbitrum",
             queries: {
                 getPools: {
-                    query: MESSARI_POOLS_QUERY,
+                    queryKey: ["pools", "arbitrum", "uniswap-v3"],
+                    queryFn: async () => {
+                        return await request(
+                            "https://api.thegraph.com/subgraphs/name/messari/uniswap-v3-arbitrum",
+                            MESSARI_UNISWAPV3_POOLS_QUERY,
+                            {
+                                protocolId: "0x1f98431c8ad98523631ae4a59f267346ea31f984",
+                            }
+                        );
+                    },
                     type: "Messari",
-                    variables: {
-                        protocolId: "0xc35dadb65012ec5796536bd9864ed8773abc74c4",
-                    }
+
                 }
             }
         },
         sushiswap: {
             apiName: "arbitrum-sushiswap",
-            contractId: "0xc35dadb65012ec5796536bd9864ed8773abc74c4",
-            uri: "https://api.thegraph.com/subgraphs/name/messari/sushiswap-arbitrum",
             queries: {
                 getPools: {
-                    query: MESSARI_POOLS_QUERY,
+                    queryKey: ["pools", "arbitrum", "sushiswap"],
+                    queryFn: async () => {
+                        return await request(
+                            "https://api.thegraph.com/subgraphs/name/messari/sushiswap-arbitrum",
+                            MESSARI_SUSHISWAP_POOLS_QUERY,
+                            {
+                                protocolId: "0xc35dadb65012ec5796536bd9864ed8773abc74c4",
+                            }
+                        );
+                    },
                     type: "Messari",
-                    variables: {
-                        protocolId: "0xc35dadb65012ec5796536bd9864ed8773abc74c4",
-                    }
                 }
             }
         }
     },
     ethereum: {
-
+        "uniswap-v3": {
+            apiName: "ethereum-uniswap-v3",
+            queries: {
+                getPools: {
+                    queryKey: ["pools", "ethereum", "uniswap-v3"],
+                    queryFn: async () => {
+                        return await request(
+                            "https://api.thegraph.com/subgraphs/name/messari/uniswap-v3-ethereum",
+                            MESSARI_UNISWAPV3_POOLS_QUERY,
+                            {
+                                protocolId: "0x1f98431c8ad98523631ae4a59f267346ea31f984",
+                            }
+                        );
+                    },
+                    type: "Messari",
+                }
+            }
+        }
     }
 };
 
 
-// function setQueryResults(queryResults: QueryResults, chainKey: ChainsKey, dexKey: DexesKey, queryName: QueryTypes, queryResult: QueryResult) {
-//     if (!queryResults[chainKey]) {
-//         queryResults[chainKey] = {};
+// function setQueryResults(queries: queries, chainKey: ChainsKey, dexKey: DexesKey, queryName: QueryTypes, Query: Query) {
+//     if (!queries[chainKey]) {
+//         queries[chainKey] = {};
 //     }
-//     if (!queryResults[chainKey]![dexKey]) {
-//         queryResults[chainKey]![dexKey] = {};
+//     if (!queries[chainKey]![dexKey]) {
+//         queries[chainKey]![dexKey] = {};
 //     }
-//     const { data, loading, error } = queryResult;
-//     queryResults[chainKey]![dexKey]![queryName] = {
+//     const { data, loading, error } = Query;
+//     queries[chainKey]![dexKey]![queryName] = {
 //         data,
 //         loading,
 //         error
@@ -219,34 +270,27 @@ const queryContextByChainByDex: QueryContextByChainByDexMap = {
 // }
 
 function isQueryContext(context: any): context is IQueryContext {
-    return context && context.apiName && context.uri && context.queries;
+    return context && context.apiName && context.queries;
 }
 
 
-function setQueryResultsByChainsAndDexes(queryContextByChainByDex: QueryContextByChainByDexMap, chains: Array<ChainsKey>, dexes: Array<DexesKey>, queryName: QueryTypes, queryResults: Array<QueryResult>) {
+function setQueryResultsByChainsAndDexes(queryContextByChainByDex: QueryContextByChainByDexMap, chains: Array<ChainsKey>, dexes: Array<DexesKey>, queryName: QueryTypes, queries: Array<Query>) {
     chains.forEach((chainKey) => {
         dexes.forEach((dexKey) => {
             const queryContext = queryContextByChainByDex[chainKey][dexKey];
             if (isQueryContext(queryContext)) {
-                const { apiName, queries } = queryContext;
-                const { query, variables, type } = queries[queryName];
+                const { apiName, queries: queryContextQueries } = queryContext;
+                const { queryFn, queryKey, type } = queryContextQueries[queryName];
 
-                let result;
-                if (type === "Messari" && queryName === "getPools") {
-                    result = useQuery<MesarriPoolsResponse>(query, { context: { apiName }, variables });
-                }
-                else {
-                    result = useQuery(query, { context: { apiName }, variables });
-                }
-                // console.log(result);
-                const queryResult: QueryResult = {
+                const Query: Query = {
                     chain: chainKey,
                     dex: dexKey,
                     queryName,
-                    result
+                    type,
+                    queryFn,
+                    queryKey
                 };
-                queryResults.push(queryResult);
-                // setQueryResults(queryResults, chainKey, dexKey, queryName, queryResult)
+                queries.push(Query);
             }
         })
     })
@@ -256,18 +300,18 @@ function setQueryResultsByChainsAndDexes(queryContextByChainByDex: QueryContextB
 // if we have no chain --> return every chain and every dex
 // if we have a chain but no dex --> return every dex on that chain
 // if we have a chain and dex --> return only that chain & dex
-function getQueryByChainByDex(queryContextByChainByDex: QueryContextByChainByDexMap, chains: Array<ChainsKey>, dexes: Array<DexesKey>, queryName: QueryTypes): Array<QueryResult> {
-    const queryResults: Array<QueryResult> = [];
+function getQueryByChainByDex(queryContextByChainByDex: QueryContextByChainByDexMap, chains: Array<ChainsKey>, dexes: Array<DexesKey>, queryName: QueryTypes): Array<Query> {
+    const queries: Array<Query> = [];
     if (chains.length === 0) {
-        setQueryResultsByChainsAndDexes(queryContextByChainByDex, CHAINS, DEXES, queryName, queryResults);
+        setQueryResultsByChainsAndDexes(queryContextByChainByDex, CHAINS, DEXES, queryName, queries);
     }
     else if (dexes.length === 0) {
-        setQueryResultsByChainsAndDexes(queryContextByChainByDex, chains, Object.values(DEXES), queryName, queryResults);
+        setQueryResultsByChainsAndDexes(queryContextByChainByDex, chains, Object.values(DEXES), queryName, queries);
     }
     else {
-        setQueryResultsByChainsAndDexes(queryContextByChainByDex, chains, dexes, queryName, queryResults);
+        setQueryResultsByChainsAndDexes(queryContextByChainByDex, chains, dexes, queryName, queries);
     }
-    return queryResults;
+    return queries;
 }
 
 
@@ -276,25 +320,32 @@ export default function Listings() {
     const { chain, dex } = useParams();
     const chains: Array<ChainsKey> = chain ? [chain as ChainsKey] : [];
     const dexes: Array<DexesKey> = dex ? [dex as DexesKey] : [];
-    const queryResults = getQueryByChainByDex(queryContextByChainByDex, chains, dexes, "getPools");
-    const loading = queryResults.every((queryResult) => queryResult.result.loading);
+    const queries = getQueryByChainByDex(queryContextByChainByDex, chains, dexes, "getPools");
+    const results = useQueries({
+        queries: queries.map((Query) => ({
+            queryKey: Query.queryKey,
+            queryFn: Query.queryFn
+        }))
+    });
+    console.log(results);
+    const loading = results.every((result) => result.isLoading);
 
     const mutatedData = (() => {
         let volumeUSD = 0;
         let transactionCount = 0;
         let activeUsers = 0;
         let aggregatePools = [];
-        for (let queryResult of queryResults) {
-            console.log(queryResult);
-            const { data } = queryResult.result;
+        for (let i = 0; i < results.length; i++) {
+            const result = results[i];
+            const { data } = result;
             if (isMessariPoolsResponse(data)) {
                 volumeUSD += parseFloat(data.dexAmmProtocol.financialMetrics[0].dailyVolumeUSD);
                 transactionCount += data.dexAmmProtocol.dailyUsageMetrics[0].dailyTransactionCount;
                 activeUsers += data.dexAmmProtocol.dailyUsageMetrics[0].dailyActiveUsers;
                 for (let pool of data.dexAmmProtocol.pools) {
                     aggregatePools.push({
-                        chain: queryResult.chain,
-                        dex: queryResult.dex,
+                        chain: queries[i].chain,
+                        dex: queries[i].dex,
                         ...pool
                     });
                 }
@@ -307,7 +358,6 @@ export default function Listings() {
             pools: aggregatePools
         }
     })();
-
 
     return (
         <div className="flex flex-col flex-nowrap w-full h-full overflow-y-scroll">
@@ -326,3 +376,6 @@ export default function Listings() {
         </div>
     )
 }
+
+
+

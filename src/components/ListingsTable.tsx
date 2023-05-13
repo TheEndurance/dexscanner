@@ -23,15 +23,32 @@ const columns = [
         header: () => 'Price',
         cell: prop => <span>${d3Format(".4~s")(parseFloat(prop.getValue().lastPriceUSD))}</span>,
     }),
-    columnHelper.accessor(row => row.dailySnapshots[0].dailyVolumeUSD, {
+    columnHelper.accessor(row => row, {
         id: 'dailyVolumeUSD',
         header: "Daily Volume (USD)",
-        cell: info => <i>${d3Format(".4~s")(parseFloat(info.getValue())).replace(/G/, "B")}</i>
+        cell: info => {
+            const value = info.getValue();
+            const hasDailyVolumeUSD = value && value.dailySnapshots && value.dailySnapshots[0] && value.dailySnapshots[0].dailyVolumeUSD;
+            if (hasDailyVolumeUSD) {
+                return <i>${d3Format(".4~s")(parseFloat(value.dailySnapshots[0].dailyVolumeUSD)).replace(/G/, "B")}</i>;
+            } else {
+                return <i>N/A</i>;
+            }
+        }
     }),
-    columnHelper.accessor(row => row.dailySnapshots[0].totalValueLockedUSD, {
+    columnHelper.accessor(row => row, {
         id: 'totalValueLockedUSD',
         header: "TVL (USD)",
-        cell: info => <i>${d3Format(".4~s")(parseFloat(info.getValue())).replace(/G/, "B")}</i>
+        cell: info => {
+            const value = info.getValue();
+            const hasTotalValueLockedUSD = value && value.dailySnapshots && value.dailySnapshots[0] && value.dailySnapshots[0].totalValueLockedUSD;
+
+            if (hasTotalValueLockedUSD) {
+                return <i>${d3Format(".4~s")(parseFloat(info.getValue().dailySnapshots[0].totalValueLockedUSD)).replace(/G/, "B")}</i>;
+            } else {
+                return <i>N/A</i>;
+            }
+        }
     }),
     columnHelper.accessor('createdTimestamp', {
         id: 'createdAt',
@@ -50,16 +67,17 @@ function headerClassNameHelper(headerId: string): string {
 
 export function ListingsTable({ loading, data }: { loading: boolean, data: Array<MessariTablePool> }) {
     const navigate = useNavigate();
-
-    function handleRowClick(rowData: MessariTablePool) {
-        navigate(`/${rowData.chain}/${rowData.dex}/${rowData.id}`);
-    }
-
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
     });
+
+    function handleRowClick(rowData: MessariTablePool) {
+        navigate(`/${rowData.chain}/${rowData.dex}/${rowData.id}`);
+    }
+
+
     return (
 
         < table className="flex-auto w-full table-fixed border-separate border-spacing-0" >
